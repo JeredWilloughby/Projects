@@ -1,0 +1,40 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# Step 1: Create a synthetic dataset
+# This is just a placeholder. Real datasets would have more features and complexity.
+data = {
+    'transaction_amount': np.random.uniform(1, 1000, 1000),
+    'transaction_type': np.random.choice(['online', 'offline'], 1000),
+    'customer_age': np.random.randint(18, 70, 1000),
+    'is_fraud': np.random.choice([0, 1], 1000, p=[0.95, 0.05]) # 95% non-fraudulent, 5% fraudulent
+}
+
+df = pd.DataFrame(data)
+
+# Step 2: Data Preprocessing
+# Encoding categorical variable
+df['transaction_type'] = df['transaction_type'].map({'online': 1, 'offline': 0})
+
+# Standardizing the numerical variables
+scaler = StandardScaler()
+df['transaction_amount'] = scaler.fit_transform(df[['transaction_amount']])
+df['customer_age'] = scaler.fit_transform(df[['customer_age']])
+
+# Step 3: Splitting the dataset into training and testing sets
+X = df.drop('is_fraud', axis=1)
+y = df['is_fraud']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 4: Model Training
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Step 5: Model Evaluation
+predictions = model.predict(X_test)
+print(confusion_matrix(y_test, predictions))
+print(classification_report(y_test, predictions))
