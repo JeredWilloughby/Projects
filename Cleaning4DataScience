@@ -1,0 +1,67 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.impute import SimpleImputer
+
+class DataCleaner:
+    def __init__(self):
+        self.scalers = {}
+        self.encoders = {}
+        self.imputers = {}
+    
+    def fit_transform(self, df):
+        # Handle missing values
+        for column in df.columns:
+            if df[column].dtype == 'object':
+                self.imputers[column] = SimpleImputer(strategy='most_frequent')
+            else:
+                self.imputers[column] = SimpleImputer(strategy='mean')
+            df[column] = self.imputers[column].fit_transform(df[[column]])
+        
+        # Encode categorical variables
+        for column in df.select_dtypes(include=['object']).columns:
+            self.encoders[column] = LabelEncoder()
+            df[column] = self.encoders[column].fit_transform(df[column])
+        
+        # Normalize numerical features
+        for column in df.select_dtypes(include=['float64', 'int64']).columns:
+            self.scalers[column] = StandardScaler()
+            df[column] = self.scalers[column].fit_transform(df[[column]])
+        
+        # Remove duplicates
+        df.drop_duplicates(inplace=True)
+        
+        return df
+    
+    def transform(self, df):
+        # Handle missing values
+        for column in df.columns:
+            df[column] = self.imputers[column].transform(df[[column]])
+        
+        # Encode categorical variables
+        for column in df.select_dtypes(include=['object']).columns:
+            df[column] = self.encoders[column].transform(df[column])
+        
+        # Normalize numerical features
+        for column in df.select_dtypes(include=['float64', 'int64']).columns:
+            df[column] = self.scalers[column].transform(df[[column]])
+        
+        # Remove duplicates
+        df.drop_duplicates(inplace=True)
+        
+        return df
+
+# Example usage
+if __name__ == "__main__":
+    # Sample data
+    data = {
+        'age': [25, 27, 29, None, 32, 31, 28],
+        'salary': [50000, 54000, 58000, 60000, None, 57000, 55000],
+        'department': ['HR', 'Finance', 'IT', 'HR', 'Finance', 'IT', None]
+    }
+    df = pd.DataFrame(data)
+    
+    cleaner = DataCleaner()
+    cleaned_df = cleaner.fit_transform(df)
+    
+    print("Cleaned DataFrame:")
+    print(cleaned_df)
