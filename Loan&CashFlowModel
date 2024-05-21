@@ -1,0 +1,134 @@
+#Step 1: Import necessary libraries
+
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+import random
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+#Step 2: Mock data preparation for existing loans
+
+collateral_data = {
+    'loan_id': ['L001', 'L002', 'L003', 'L004', 'L005'],
+    'principal': [100000, 200000, 150000, 300000, 250000],
+    'interest_rate': [0.05, 0.04, 0.045, 0.06, 0.055],
+    'term_years': [30, 20, 25, 15, 10],
+    'start_date': [datetime(2020, 1, 1), datetime(2021, 6, 1), datetime(2019, 3, 1), datetime(2018, 7, 1), datetime(2022, 1, 1)],
+    'defaulted': [0, 0, 1, 0, 1]  # 1 indicates the loan has defaulted, 0 indicates it has not
+}
+
+collateral_df = pd.DataFrame(collateral_data)
+
+#Step 3: Feature engineering
+
+# Calculate monthly payment
+def calculate_monthly_payment(principal, annual_rate, term_years):
+    monthly_rate = annual_rate / 12
+    num_payments = term_years * 12
+    payment = principal * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
+    return payment
+
+collateral_df['monthly_payment'] = collateral_df.apply(
+    lambda row: calculate_monthly_payment(row['principal'], row['interest_rate'], row['term_years']), axis=1
+)
+collateral_df['loan_age_months'] = collateral_df.apply(
+    lambda row: (datetime.now() - row['start_date']).days // 30, axis=1
+)
+
+
+## Calculate monthly payment
+def calculate_monthly_payment(principal, annual_rate, term_years):
+    monthly_rate = annual_rate / 12
+    num_payments = term_years * 12
+    payment = principal * (monthly_rate * (1 + monthly_rate)**num_payments) / ((1 + monthly_rate)**num_payments - 1)
+    return payment
+
+collateral_df['monthly_payment'] = collateral_df.apply(
+    lambda row: calculate_monthly_payment(row['principal'], row['interest_rate'], row['term_years']), axis=1
+)
+collateral_df['loan_age_months'] = collateral_df.apply(
+    lambda row: (datetime.now() - row['start_date']).days // 30, axis=1
+)
+
+#Step 4: Model training for loan default prediction
+
+# Define features and target
+features = collateral_df[['principal', 'interest_rate', 'term_years', 'monthly_payment', 'loan_age_months']]
+target = collateral_df['defaulted']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+
+# Train a RandomForestClassifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+print(f"Model Accuracy: {accuracy * 100:.2f}%")
+print("Confusion Matrix:")
+print(conf_matrix)
+
+
+#Step 5: Simulate future loan originations and predict defaults
+
+def simulate_future_loans(num_loans, start_date):
+    future_loans = []
+    for i in range(num_loans):
+        loan_id = f'F{i+1:03d}'
+        principal = random.randint(100000, 500000)
+        interest_rate = random.uniform(0.03, 0.07)
+        term_years = random.choice([10, 15, 20, 25, 30])
+        future_loans.append({
+            'loan_id': loan_id,
+            'principal': principal,
+            'interest_rate': interest_rate,
+            'term_years': term_years,
+            'start_date': start_date + timedelta(days=random.randint(0, 365)),
+            'monthly_payment': calculate_monthly_payment(principal, interest_rate, term_years)
+        })
+    return pd.DataFrame(future_loans)
+
+future_loans_df = simulate_future_loans(10, datetime(2024, 1, 1))
+future_loans_df['loan_age_months'] = future_loans_df.apply(
+    lambda row: (datetime.now() - row['start_date']).days // 30, axis=1
+)
+
+# Predict default probability for future loans
+future_features = future_loans_df[['principal', 'interest_rate', 'term_years', 'monthly_payment', 'loan_age_months']]
+future_loans_df['default_probability'] = model.predict_proba(future_features)[:, 1]
+
+
+#Step 6: Generate cashflows based on predictions
+
+def generate_cashflows(collateral_df, default_threshold=0.5):
+    cashflows = []
+    for index, loan in collateral_df.iterrows():
+        if loan.get('default_probability', 0) < default_threshold:
+            for month in range(loan['term_years'] * 12):
+                payment_date = loan['start_date'] + timedelta(days=30*month)
+                if payment_date > datetime.now():  # Only consider future cashflows
+                    cashflows.append({
+                        'loan_id': loan['loan_id'],
+                        'date': payment_date,
+                        'payment': loan['monthly_payment']
+                    })
+    return pd.DataFrame(cashflows)
+
+existing_cashflows = generate_cashflows(collateral_df)
+future_cashflows = generate_cashflows(future_loans_df)
+
+# Combine existing and future cashflows
+all_cashflows = pd.concat([existing_cashflows, future_cashflows])
+
+# Output cashflow data to CSV for analysis
+all_cashflows.to_csv('loan_cashflows_ml.csv', index=False)
+
+print("Loan cashflows have been generated and saved to 'loan_cashflows_ml.csv'")
