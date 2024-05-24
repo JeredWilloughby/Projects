@@ -36,7 +36,27 @@ print(conf_matrix)
 print("Classification Report:")
 print(class_report)
 
-# Step 6: Feature importance analysis
-feature_importances = pd.Series(model.feature_importances_, index=features.columns).sort_values(ascending=False)
-print("Feature Importances:")
-print(feature_importances)
+# Step 6: Define the Candidate class to accept new candidate data
+class Candidate:
+    def __init__(self, name, education_level, years_experience, relevant_skills, interview_score, previous_job_performance):
+        self.name = name
+        self.education_level = education_level
+        self.years_experience = years_experience
+        self.relevant_skills = relevant_skills
+        self.interview_score = interview_score
+        self.previous_job_performance = previous_job_performance
+
+# Step 7: Function to evaluate a new candidate
+def evaluate_candidate(candidate, model):
+    candidate_data = np.array([[candidate.education_level, candidate.years_experience, candidate.relevant_skills, candidate.interview_score, candidate.previous_job_performance]])
+    prediction = model.predict(candidate_data)
+    recommendation = "Hire" if prediction[0] == 1 else "Do not hire"
+    return recommendation
+
+# Example usage:
+# Creating a new candidate
+new_candidate = Candidate(name="John Doe", education_level=3.0, years_experience=5.0, relevant_skills=4.0, interview_score=8.0, previous_job_performance=7.0)
+
+# Evaluating the new candidate
+recommendation = evaluate_candidate(new_candidate, model)
+print(f"Recommendation for {new_candidate.name}: {recommendation}")
