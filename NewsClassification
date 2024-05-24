@@ -54,7 +54,7 @@ def classify_new_data(model, new_data):
     predicted_categories = [data.target_names[pred] for pred in predictions]
     return predicted_categories
 
-# Example new data
+# Example new data - this can be replaced with a method to scrape websites of interest.
 new_data = [
     "The space shuttle launched successfully.",
     "The stock market saw a significant increase today.",
