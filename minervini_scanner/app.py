@@ -205,11 +205,23 @@ with tab1:
         )
 
         selected_rows = aggrid_response["selected_rows"]
+        selected_symbol = st.session_state.selected_symbol  # Default fallback
+        
         if selected_rows is not None and len(selected_rows) > 0:
-            selected_symbol = selected_rows[0]["Symbol"]
+            row0 = selected_rows[0]
+            # Robust key extraction
+            if isinstance(row0, dict):
+                selected_symbol = row0.get("Symbol") or row0.get("symbol")
+            elif hasattr(row0, "__getitem__"):
+                # Try both "Symbol" and "symbol"
+                for key in ("Symbol", "symbol"):
+                    try:
+                        selected_symbol = row0[key]
+                        break
+                    except Exception:
+                        continue
             st.session_state.selected_symbol = selected_symbol
-        else:
-            selected_symbol = st.session_state.selected_symbol
+
 
 
 
