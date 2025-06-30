@@ -205,28 +205,33 @@ with tab1:
         
             selected_symbol = None
             selected_rows = aggrid_response.get("selected_rows")
-        
-            # -------- Bulletproof AgGrid selection handler -----------
-            if isinstance(selected_rows, list) and len(selected_rows) > 0:
-                row = selected_rows[0]
-                # row can be a dict or a pandas Series
-                if isinstance(row, dict):
-                    selected_symbol = row.get("Symbol") or row.get("symbol")
-                elif hasattr(row, "get"):
-                    selected_symbol = row.get("Symbol") or row.get("symbol")
-            elif hasattr(selected_rows, "iloc") and len(selected_rows) > 0:
-                # DataFrame, use .iloc[0]
-                row = selected_rows.iloc[0]
-                if "Symbol" in row:
-                    selected_symbol = row["Symbol"]
-                elif "symbol" in row:
-                    selected_symbol = row["symbol"]
-        
+            
+            # --------- Robust selection extraction -----------
+            import pandas as pd
+            
+            if isinstance(selected_rows, list):
+                if len(selected_rows) > 0:
+                    first = selected_rows[0]
+                    if isinstance(first, dict):
+                        selected_symbol = first.get("Symbol") or first.get("symbol")
+                    elif isinstance(first, pd.Series):
+                        # Rare, but possible
+                        selected_symbol = first.get("Symbol") or first.get("symbol")
+            elif isinstance(selected_rows, pd.DataFrame):
+                # If a DataFrame, use iloc if not empty
+                if not selected_rows.empty:
+                    row = selected_rows.iloc[0]
+                    if "Symbol" in row:
+                        selected_symbol = row["Symbol"]
+                    elif "symbol" in row:
+                        selected_symbol = row["symbol"]
+            
+            # Save/restore last selection for smooth user experience
             if selected_symbol is None:
-                # Use last known selection if present
                 selected_symbol = st.session_state.get("selected_symbol", None)
             else:
                 st.session_state["selected_symbol"] = selected_symbol
+
         
             # Chart/advice for the selected symbol
             if selected_symbol:
