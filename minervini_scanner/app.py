@@ -203,18 +203,18 @@ with tab1:
                 enable_enterprise_modules=False,
             )
         
+            import pandas as pd
+
             selected_symbol = None
             selected_rows = aggrid_response.get("selected_rows")
             
-            import pandas as pd
-            
-            # Bulletproof selection extraction
-            if isinstance(selected_rows, list) and len(selected_rows) > 0:
-                row = selected_rows[0]
-                if isinstance(row, dict):
-                    selected_symbol = row.get("Symbol") or row.get("symbol")
-                elif isinstance(row, pd.Series):
-                    selected_symbol = row.get("Symbol") or row.get("symbol")
+            # Bulletproof selection logic for all AgGrid return types:
+            if isinstance(selected_rows, list):
+                if selected_rows and isinstance(selected_rows[0], dict):
+                    # Standard case: list of dicts
+                    selected_symbol = selected_rows[0].get("Symbol") or selected_rows[0].get("symbol")
+                elif selected_rows and isinstance(selected_rows[0], pd.Series):
+                    selected_symbol = selected_rows[0].get("Symbol") or selected_rows[0].get("symbol")
             elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
                 row = selected_rows.iloc[0]
                 if "Symbol" in row:
@@ -222,11 +222,12 @@ with tab1:
                 elif "symbol" in row:
                     selected_symbol = row["symbol"]
             
-            # Fallback to previous selection if nothing new is chosen
-            if selected_symbol is None:
+            # Fallback to previous session if nothing is selected
+            if not selected_symbol:
                 selected_symbol = st.session_state.get("selected_symbol", None)
             else:
                 st.session_state["selected_symbol"] = selected_symbol
+
 
 
 
