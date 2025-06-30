@@ -206,32 +206,21 @@ with tab1:
 
         selected_rows = aggrid_response["selected_rows"]
         st.write("DEBUG selected_rows:", selected_rows)
-        selected_symbol = st.session_state.selected_symbol  # fallback
-        
+        #selected_symbol = st.session_state.selected_symbol  # fallback
+        selected_symbol = None
         if selected_rows:
-            row0 = selected_rows[0]
-            found = False
-            for key in ("Symbol", "symbol"):
-                # Try dict access
-                if isinstance(row0, dict) and key in row0:
-                    selected_symbol = row0[key]
-                    found = True
-                    break
-                # Try attribute (e.g., Series or namedtuple)
-                if hasattr(row0, key):
-                    selected_symbol = getattr(row0, key)
-                    found = True
-                    break
-                # Try DataFrame-style access
-                try:
-                    selected_symbol = row0[key]
-                    found = True
-                    break
-                except Exception:
-                    continue
-            if not found:
-                selected_symbol = None
-            st.session_state.selected_symbol = selected_symbol
+            # Sometimes AgGrid returns a list of dicts, sometimes a DataFrame
+            if isinstance(selected_rows, list) and len(selected_rows) > 0:
+                selected_row = selected_rows[0]
+                # Try both string and int keys just in case
+                if isinstance(selected_row, dict):
+                    selected_symbol = selected_row.get("Symbol") or selected_row.get("symbol")
+            elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
+                selected_symbol = selected_rows.iloc[0].get("Symbol") or selected_rows.iloc[0].get("symbol")
+            st.session_state["selected_symbol"] = selected_symbol
+        else:
+            selected_symbol = st.session_state.get("selected_symbol", None)
+
 
 
 
