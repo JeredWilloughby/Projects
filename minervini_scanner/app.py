@@ -186,50 +186,58 @@ with tab1:
     else:
         table_df = st.session_state.table_df
 
-    if not table_df.empty:
-        st.subheader(f"📊 Scanned Results ({len(table_df)})")
-        gb = GridOptionsBuilder.from_dataframe(table_df)
-        gb.configure_selection('single', use_checkbox=False)
-        gb.configure_column("Symbol", headerCheckboxSelection=False)
-        grid_options = gb.build()
+        if not table_df.empty:
+            st.subheader(f"📊 Scanned Results ({len(table_df)})")
+            gb = GridOptionsBuilder.from_dataframe(table_df)
+            gb.configure_selection('single', use_checkbox=False)
+            gb.configure_column("Symbol", headerCheckboxSelection=False)
+            grid_options = gb.build()
+    
+            aggrid_response = AgGrid(
+                table_df,
+                gridOptions=grid_options,
+                update_mode=GridUpdateMode.SELECTION_CHANGED,
+                fit_columns_on_grid_load=True,
+                theme="streamlit",
+                height=350,
+                enable_enterprise_modules=False,
+            )
+    
+            selected_symbol = None
+            selected_rows = aggrid_response.get("selected_rows")
+    
+            # Robust selection extraction, no KeyError possible:
+            if isinstance(selected_rows, list) and len(selected_rows) > 0:
+                first = selected_rows[0]
+                # Sometimes AgGrid gives a dict, sometimes a pandas Series (rare)
+                if isinstance(first, dict):
+                    selected_symbol = first.get("Symbol") or first.get("symbol")
+                elif hasattr(first, "get"):  # pandas Series
+                    selected_symbol = first.get("Symbol") or first.get("symbol")
+            elif hasattr(selected_rows, "empty") and not selected_rows.empty:
+                # DataFrame style
+                if "Symbol" in selected_rows.columns:
+                    selected_symbol = selected_rows.iloc[0]["Symbol"]
+                elif "symbol" in selected_rows.columns:
+                    selected_symbol = selected_rows.iloc[0]["symbol"]
+    
+            if selected_symbol is None:
+                # Persist last selection if present
+                selected_symbol = st.session_state.get("selected_symbol", None)
+            else:
+                st.session_state["selected_symbol"] = selected_symbol
+    
+            # Chart/advice for the selected symbol
+            if selected_symbol:
+                item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
+                if item:
+                    st.markdown(f"### 📊 {item['Ticker']} (Score: {item['Score']}, Passed: {item.get('Rules', '')})")
+                    st.markdown("**Price Chart**")
+                    fig = plot_price_chart(item["Data"], item["Ticker"])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.markdown("### 💡 Trade Strategy")
+                    st.markdown(generate_trade_advice(item["Data"]))
 
-        aggrid_response = AgGrid(
-            table_df,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-            fit_columns_on_grid_load=True,
-            theme="streamlit",
-            height=350,
-            enable_enterprise_modules=False,
-        )
-
-        selected_rows = aggrid_response["selected_rows"]
-        # Robust, cross-type selection logic!
-        selected_symbol = None
-        if isinstance(selected_rows, list) and selected_rows:
-            row = selected_rows[0]
-            if isinstance(row, dict):
-                selected_symbol = row.get("Symbol") or row.get("symbol")
-        elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
-            if "Symbol" in selected_rows.columns:
-                selected_symbol = selected_rows.iloc[0]["Symbol"]
-            elif "symbol" in selected_rows.columns:
-                selected_symbol = selected_rows.iloc[0]["symbol"]
-        else:
-            selected_symbol = st.session_state.get("selected_symbol", None)
-
-        st.session_state["selected_symbol"] = selected_symbol
-
-        # Chart/advice for the selected symbol
-        if selected_symbol:
-            item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
-            if item:
-                st.markdown(f"### 📊 {item['Ticker']} (Score: {item['Score']}, Passed: {item.get('Rules', '')})")
-                st.markdown("**Price Chart**")
-                fig = plot_price_chart(item["Data"], item["Ticker"])
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown("### 💡 Trade Strategy")
-                st.markdown(generate_trade_advice(item["Data"]))
 
     # Branding footer
     st.markdown(
