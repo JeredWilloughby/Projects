@@ -203,30 +203,21 @@ with tab1:
             height=350,
             enable_enterprise_modules=False,
         )
-
+        
         selected_rows = aggrid_response["selected_rows"]
-        st.write("DEBUG selected_rows:", selected_rows)
-        #selected_symbol = st.session_state.selected_symbol  # fallback
+        st.write("DEBUG selected_rows:", selected_rows)  # Optional, helps debugging
+        
         selected_symbol = None
         if selected_rows:
-            # Sometimes AgGrid returns a list of dicts, sometimes a DataFrame
-            if isinstance(selected_rows, list) and len(selected_rows) > 0:
-                selected_row = selected_rows[0]
-                # Try both string and int keys just in case
-                if isinstance(selected_row, dict):
-                    selected_symbol = selected_row.get("Symbol") or selected_row.get("symbol")
-            elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
-                selected_symbol = selected_rows.iloc[0].get("Symbol") or selected_rows.iloc[0].get("symbol")
+            row = selected_rows[0]
+            if isinstance(row, dict):
+                selected_symbol = row.get("Symbol") or row.get("symbol")
+            elif isinstance(row, pd.Series):
+                selected_symbol = row.get("Symbol") or row.get("symbol")
             st.session_state["selected_symbol"] = selected_symbol
         else:
             selected_symbol = st.session_state.get("selected_symbol", None)
-
-
-
-
-
-
-
+        
         # Chart/advice for the selected symbol
         if selected_symbol:
             item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
@@ -237,6 +228,7 @@ with tab1:
                 st.plotly_chart(fig, use_container_width=True)
                 st.markdown("### 💡 Trade Strategy")
                 st.markdown(generate_trade_advice(item["Data"]))
+
 
     # Branding footer
     st.markdown(
