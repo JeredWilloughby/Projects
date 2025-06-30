@@ -208,27 +208,26 @@ with tab1:
             
             import pandas as pd
             
-            if isinstance(selected_rows, list):
-                if len(selected_rows) > 0:
-                    row = selected_rows[0]
-                    if isinstance(row, dict):
-                        selected_symbol = row.get("Symbol") or row.get("symbol")
-                    elif isinstance(row, pd.Series):
-                        selected_symbol = row.get("Symbol") or row.get("symbol")
-            elif isinstance(selected_rows, pd.DataFrame):
-                if not selected_rows.empty:
-                    # Access first row safely
-                    row = selected_rows.iloc[0]
-                    if "Symbol" in row:
-                        selected_symbol = row["Symbol"]
-                    elif "symbol" in row:
-                        selected_symbol = row["symbol"]
+            # Bulletproof selection extraction
+            if isinstance(selected_rows, list) and len(selected_rows) > 0:
+                row = selected_rows[0]
+                if isinstance(row, dict):
+                    selected_symbol = row.get("Symbol") or row.get("symbol")
+                elif isinstance(row, pd.Series):
+                    selected_symbol = row.get("Symbol") or row.get("symbol")
+            elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
+                row = selected_rows.iloc[0]
+                if "Symbol" in row:
+                    selected_symbol = row["Symbol"]
+                elif "symbol" in row:
+                    selected_symbol = row["symbol"]
             
-            # Fallback to session state if nothing is selected
+            # Fallback to previous selection if nothing new is chosen
             if selected_symbol is None:
                 selected_symbol = st.session_state.get("selected_symbol", None)
             else:
                 st.session_state["selected_symbol"] = selected_symbol
+
 
 
         
