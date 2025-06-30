@@ -1,0 +1,180 @@
+#Create a synthetic dataset based on proven features that make up the most variance (statistics)
+
+import pandas as pd
+import numpy as np
+import random
+
+# Set a seed for reproducibility
+np.random.seed(0)
+
+# Helper functions to generate random data
+def random_age():
+    return np.random.randint(18, 70)
+
+def random_gender():
+    return np.random.choice(['Male', 'Female', 'Other'])
+
+def random_income_level():
+    return np.random.choice(['Low', 'Medium', 'High'])
+
+def random_education():
+    return np.random.choice(['High School', 'Bachelor', 'Master', 'PhD'])
+
+def random_location():
+    return np.random.choice(['Urban', 'Suburban', 'Rural'])
+
+def random_usage_pattern():
+    return np.random.randint(1, 100)
+
+def random_subscription_length():
+    return np.random.randint(1, 60) # in months
+
+def random_payment_method():
+    return np.random.choice(['Credit Card', 'Debit Card', 'PayPal', 'Bank Transfer'])
+
+def random_payment_frequency():
+    return np.random.choice(['Monthly', 'Quarterly', 'Yearly'])
+
+def random_payment_history():
+    return np.random.choice(['On-time', 'Occasional delay', 'Frequent delay'])
+
+def random_engagement():
+    return np.random.randint(0, 50)
+
+def random_service_change():
+    return np.random.choice(['No Change', 'Minor Change', 'Major Change'])
+
+def random_support_interaction():
+    return np.random.randint(0, 20)
+
+def random_customer_feedback():
+    return np.random.uniform(1.0, 5.0)
+
+def random_social_media_activity():
+    return np.random.randint(0, 100)
+
+def random_satisfaction_score():
+    return np.random.uniform(1.0, 10.0)
+
+def random_competitor_activity():
+    return np.random.choice(['No Change', 'Minor Change', 'Major Change'])
+
+def random_external_factors():
+    return np.random.choice(['Stable', 'Minor Change', 'Major Change'])
+
+def random_churn():
+    return np.random.choice([0, 1]) # 0 for No Churn, 1 for Churn
+
+# Number of records in the dataset
+num_records = 1000
+
+# Create the dataset
+data = {
+    'Age': [random_age() for _ in range(num_records)],
+    'Gender': [random_gender() for _ in range(num_records)],
+    'Income Level': [random_income_level() for _ in range(num_records)],
+    'Education': [random_education() for _ in range(num_records)],
+    'Location': [random_location() for _ in range(num_records)],
+    'Usage Pattern': [random_usage_pattern() for _ in range(num_records)],
+    'Subscription Length': [random_subscription_length() for _ in range(num_records)],
+    'Payment Method': [random_payment_method() for _ in range(num_records)],
+    'Payment Frequency': [random_payment_frequency() for _ in range(num_records)],
+    'Payment History': [random_payment_history() for _ in range(num_records)],
+    'Customer Engagement': [random_engagement() for _ in range(num_records)],
+    'Service/Product Changes': [random_service_change() for _ in range(num_records)],
+    'Customer Support Interactions': [random_support_interaction() for _ in range(num_records)],
+    'Customer Feedback': [random_customer_feedback() for _ in range(num_records)],
+    'Social Media Activity': [random_social_media_activity() for _ in range(num_records)],
+    'Customer Satisfaction Score': [random_satisfaction_score() for _ in range(num_records)],
+    'Competitor Activity': [random_competitor_activity() for _ in range(num_records)],
+    'External Factors': [random_external_factors() for _ in range(num_records)],
+    'Churn': [random_churn() for _ in range(num_records)]
+}
+
+# Create a DataFrame
+df = pd.DataFrame(data)
+df.head()
+-------------------------------------------------------------------------------------------------------
+
+# Machine learning models:
+
+---------------------------------------------------------------------------------------------------------
+# Logistic Regression
+
+def train_logistic_regression(X_train, y_train, X_test, y_test):
+    logreg_pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                                      ('model', LogisticRegression(max_iter=1000))])
+    logreg_pipeline.fit(X_train, y_train)
+    y_pred = logreg_pipeline.predict(X_test)
+
+    print("Logistic Regression Metrics:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.2f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.2f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, logreg_pipeline.predict_proba(X_test)[:, 1]):.2f}")
+
+    return logreg_pipeline
+----------------------------------------------------------------------------------------------------------
+# Random Forest Classifier
+
+def train_random_forest(X_train, y_train, X_test, y_test):
+    rf_pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                                  ('model', RandomForestClassifier(n_estimators=100))])
+    rf_pipeline.fit(X_train, y_train)
+    y_pred = rf_pipeline.predict(X_test)
+
+    print("Random Forest Metrics:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.2f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.2f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, rf_pipeline.predict_proba(X_test)[:, 1]):.2f}")
+
+    return rf_pipeline
+--------------------------------------------------------------------------------------------------------------
+# Gradient Boosting Classifier
+
+def train_gradient_boosting(X_train, y_train, X_test, y_test):
+    gbc_pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                                   ('model', GradientBoostingClassifier(n_estimators=100))])
+    gbc_pipeline.fit(X_train, y_train)
+    y_pred = gbc_pipeline.predict(X_test)
+
+    print("Gradient Boosting Metrics:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.2f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.2f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, gbc_pipeline.predict_proba(X_test)[:, 1]):.2f}")
+
+    return gbc_pipeline
+--------------------------------------------------------------------------------------------------------------
+# Support Vector Machine (SVM)
+
+def train_svm(X_train, y_train, X_test, y_test):
+    svc_pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                                   ('model', SVC(probability=True))])
+    svc_pipeline.fit(X_train, y_train)
+    y_pred = svc_pipeline.predict(X_test)
+
+    print("SVM Metrics:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.2f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.2f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, svc_pipeline.predict_proba(X_test)[:, 1]):.2f}")
+
+    return svc_pipeline
+-----------------------------------------------------------------------------------------------------------------
+# K-Nearest Neighbors (KNN)
+
+def train_knn(X_train, y_train, X_test, y_test):
+    knn_pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                                   ('model', KNeighborsClassifier(n_neighbors=5))])
+    knn_pipeline.fit(X_train, y_train)
+    y_pred = knn_pipeline.predict(X_test)
+
+    print("KNN Metrics:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.2f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.2f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, knn_pipeline.predict_proba(X_test)[:, 1]):.2f}")
+
+    return knn_pipeline

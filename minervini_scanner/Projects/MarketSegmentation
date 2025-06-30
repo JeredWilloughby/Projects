@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.cluster import DBSCAN
+import matplotlib.pyplot as plt
+
+# Function to generate a synthetic dataset
+def generate_synthetic_data(n_samples=1000):
+    age = np.random.randint(18, 70, n_samples)
+    income = np.random.randint(30000, 100000, n_samples)
+    spending_score = np.random.randint(1, 100, n_samples)
+    purchase_frequency = np.random.randint(1, 30, n_samples)
+    employment_status = np.random.choice(['Employed', 'Unemployed', 'Self-Employed'], n_samples)
+    education_level = np.random.choice(['High School', 'Bachelor', 'Master', 'PhD'], n_samples)
+    marital_status = np.random.choice(['Single', 'Married', 'Divorced'], n_samples)
+    data = pd.DataFrame({
+        'Age': age,
+        'Income': income,
+        'Spending Score': spending_score,
+        'Purchase Frequency': purchase_frequency,
+        'Employment Status': employment_status,
+        'Education Level': education_level,
+        'Marital Status': marital_status
+    })
+    return data
+
+# Function to encode and scale the data
+def encode_and_scale_data(data):
+    label_encoders = {}
+    for column in ['Employment Status', 'Education Level', 'Marital Status']:
+        le = LabelEncoder()
+        data[column] = le.fit_transform(data[column])
+        label_encoders[column] = le
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(data)
+    return scaled_data
+
+# Function to apply DBSCAN
+def apply_dbscan(scaled_data, eps, min_samples):
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+    clusters = dbscan.fit_predict(scaled_data)
+    return clusters
+
+# Generating and processing the data
+data = generate_synthetic_data()
+scaled_data = encode_and_scale_data(data)
+
+# Apply DBSCAN with estimated parameters (these may not be optimal)
+clusters = apply_dbscan(scaled_data, eps=2, min_samples=5)
+data['Cluster'] = clusters
+
+# Visualization of the clusters using 'Age' and 'Income'
+plt.figure(figsize=(10, 6))
+plt.scatter(data['Age'], data['Income'], c=data['Cluster'], cmap='viridis', marker='o')
+plt.title('DBSCAN Clustering of Market Segments')
+plt.xlabel('Age')
+plt.ylabel('Income')
+plt.colorbar(label='Cluster')
+plt.show()
+
+

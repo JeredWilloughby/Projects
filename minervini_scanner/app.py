@@ -41,7 +41,7 @@ def scan_single_ticker(
                 break
             except Exception as fetch_err:
                 last_error = fetch_err
-                time.sleep(1 + attempt)
+                datetime.time.sleep(1 + attempt)
         else:
             print(f"[ERROR] {ticker}: {last_error}")
             return None, f"ERROR: {last_error}"
@@ -249,14 +249,30 @@ The score for each stock is based on the following factors:
 Higher scores = stronger technical momentum.
 
 ---
+""")
 
-### 📈 Visual Example:
+    # --- Visual Example (Local Image) ---
+    st.markdown("### 📈 Visual Example:")
 
-![Sample Minervini Trend Template](https://i.imgur.com/f8w8osT.png)
-<sub>Sample Minervini Trend Template</sub>
+    image_path = "trend_template.jpg"  # Ensure this file is in your project directory
+    if os.path.exists(image_path):
+        st.image(
+            image_path,
+            caption="Sample Minervini Trend Template (Source: ProdigalTrader)",
+            use_container_width=True,  # <-- updated
+        )
+        st.markdown(
+            '<sub>Sample Minervini Trend Template ([Source](https://x.com/ProdigalTrader/status/1156115610532634624/photo/1))</sub>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.warning(
+            "Trend template image not found. Please add 'trend_template.jpg' to your project folder."
+        )
 
+    # --- Continue with markdown sections ---
+    st.markdown("""
 ---
-
 ### 💡 Why These Rules Work
 
 - **Price above moving averages** shows uptrend strength and institutional demand.
@@ -265,14 +281,12 @@ Higher scores = stronger technical momentum.
 - **These rules** filter for stocks most likely to outperform in uptrending markets.
 
 ---
-
 ### 📚 Classic Examples
 
-- [Mark Minervini's $NVDA run in 1999 (Case Study)](https://twitter.com/markminervini/status/1116104429961742336)
-- [William O'Neil CANSLIM & $AAPL in early 2004](https://www.investors.com/how-to-invest/investors-corner/study-winning-stocks-apple/)
+- [Mark Minervini's Risk Management Case Study (TraderLion)](https://traderlion.com/investing-champions/mark-minervinis-risk-management/)
+- [How to Make Money in Stocks by William O'Neil (Video)](https://www.financialwisdomtv.com/post/how-to-make-money-in-stocks-by-william-o-neil)
 
 ---
-
 ### 🏆 Strategy Influences
 
 - Mark Minervini (Trend Template)
@@ -283,6 +297,5 @@ Higher scores = stronger technical momentum.
 - ATR-Based Stops
 
 ---
-
 > The strategy module uses a fusion of these methods to provide conservative yet high-upside trade setups.
 """, unsafe_allow_html=True)

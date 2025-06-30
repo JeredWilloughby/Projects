@@ -1,0 +1,32 @@
+pip install google-cloud-translate
+
+from google.cloud import translate
+
+def translate_text(text, target_language='en'):
+    # Set your Google Cloud project credentials path
+    credentials_path = '/path/to/your/credentials.json'
+    
+    # Initialize the Translation API client
+    client = translate.TranslationServiceClient.from_service_account_file(credentials_path)
+
+    # Define the input text and target language
+    parent = f"projects/{client.project_path()}"
+    contents = [text]
+    target_language_code = target_language
+
+    # Perform translation
+    response = client.translate_text(
+        contents=contents,
+        target_language_code=target_language_code,
+        parent=parent
+    )
+
+    # Extract and return the translated text
+    translation = response.translations[0].translated_text
+    return translation
+
+# Example usage
+german_text = "Guten Tag, wie geht es Ihnen?"
+english_translation = translate_text(german_text)
+print(f'German: {german_text}')
+print(f'English: {english_translation}')
