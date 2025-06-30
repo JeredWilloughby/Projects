@@ -212,6 +212,7 @@ with tab1:
             selected_symbol = st.session_state.selected_symbol
 
 
+
         # Chart/advice for the selected symbol
         if selected_symbol:
             item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
