@@ -192,7 +192,7 @@ with tab1:
             gb.configure_selection('single', use_checkbox=False)
             gb.configure_column("Symbol", headerCheckboxSelection=False)
             grid_options = gb.build()
-    
+        
             aggrid_response = AgGrid(
                 table_df,
                 gridOptions=grid_options,
@@ -202,31 +202,32 @@ with tab1:
                 height=350,
                 enable_enterprise_modules=False,
             )
-    
+        
             selected_symbol = None
             selected_rows = aggrid_response.get("selected_rows")
-    
-            # Robust selection extraction, no KeyError possible:
+        
+            # -------- Bulletproof AgGrid selection handler -----------
             if isinstance(selected_rows, list) and len(selected_rows) > 0:
-                first = selected_rows[0]
-                # Sometimes AgGrid gives a dict, sometimes a pandas Series (rare)
-                if isinstance(first, dict):
-                    selected_symbol = first.get("Symbol") or first.get("symbol")
-                elif hasattr(first, "get"):  # pandas Series
-                    selected_symbol = first.get("Symbol") or first.get("symbol")
-            elif hasattr(selected_rows, "empty") and not selected_rows.empty:
-                # DataFrame style
-                if "Symbol" in selected_rows.columns:
-                    selected_symbol = selected_rows.iloc[0]["Symbol"]
-                elif "symbol" in selected_rows.columns:
-                    selected_symbol = selected_rows.iloc[0]["symbol"]
-    
+                row = selected_rows[0]
+                # row can be a dict or a pandas Series
+                if isinstance(row, dict):
+                    selected_symbol = row.get("Symbol") or row.get("symbol")
+                elif hasattr(row, "get"):
+                    selected_symbol = row.get("Symbol") or row.get("symbol")
+            elif hasattr(selected_rows, "iloc") and len(selected_rows) > 0:
+                # DataFrame, use .iloc[0]
+                row = selected_rows.iloc[0]
+                if "Symbol" in row:
+                    selected_symbol = row["Symbol"]
+                elif "symbol" in row:
+                    selected_symbol = row["symbol"]
+        
             if selected_symbol is None:
-                # Persist last selection if present
+                # Use last known selection if present
                 selected_symbol = st.session_state.get("selected_symbol", None)
             else:
                 st.session_state["selected_symbol"] = selected_symbol
-    
+        
             # Chart/advice for the selected symbol
             if selected_symbol:
                 item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
@@ -237,6 +238,7 @@ with tab1:
                     st.plotly_chart(fig, use_container_width=True)
                     st.markdown("### 💡 Trade Strategy")
                     st.markdown(generate_trade_advice(item["Data"]))
+
 
 
     # Branding footer
