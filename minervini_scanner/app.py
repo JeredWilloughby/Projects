@@ -204,30 +204,29 @@ with tab1:
             enable_enterprise_modules=False,
         )
         
-        selected_rows = aggrid_response["selected_rows"]
-        st.write("DEBUG selected_rows:", selected_rows)  # Optional, helps debugging
-        
         selected_symbol = None
-        if selected_rows:
+        selected_rows = aggrid_response["selected_rows"]
+        
+        # DEBUG: Show what's returned to fix any edge cases
+        st.write("DEBUG selected_rows type:", type(selected_rows))
+        st.write("DEBUG selected_rows value:", selected_rows)
+        
+        if isinstance(selected_rows, list) and selected_rows:
+            # AgGrid selected rows: list of dicts
             row = selected_rows[0]
             if isinstance(row, dict):
                 selected_symbol = row.get("Symbol") or row.get("symbol")
-            elif isinstance(row, pd.Series):
-                selected_symbol = row.get("Symbol") or row.get("symbol")
-            st.session_state["selected_symbol"] = selected_symbol
+        elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
+            # AgGrid sometimes returns DataFrame
+            if "Symbol" in selected_rows.columns:
+                selected_symbol = selected_rows.iloc[0]["Symbol"]
+            elif "symbol" in selected_rows.columns:
+                selected_symbol = selected_rows.iloc[0]["symbol"]
         else:
             selected_symbol = st.session_state.get("selected_symbol", None)
         
-        # Chart/advice for the selected symbol
-        if selected_symbol:
-            item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
-            if item:
-                st.markdown(f"### 📊 {item['Ticker']} (Score: {item['Score']}, Passed: {item.get('Rules', '')})")
-                st.markdown("**Price Chart**")
-                fig = plot_price_chart(item["Data"], item["Ticker"])
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown("### 💡 Trade Strategy")
-                st.markdown(generate_trade_advice(item["Data"]))
+        st.session_state["selected_symbol"] = selected_symbol
+
 
 
     # Branding footer
