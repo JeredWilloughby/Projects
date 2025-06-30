@@ -41,7 +41,7 @@ def scan_single_ticker(
                 break
             except Exception as fetch_err:
                 last_error = fetch_err
-                datetime.time.sleep(1 + attempt)
+                time.sleep(1 + attempt)
         else:
             print(f"[ERROR] {ticker}: {last_error}")
             return None, f"ERROR: {last_error}"
@@ -64,7 +64,6 @@ def scan_single_ticker(
 
         if passed:
             score = score_stock(df)
-            # New: record which rules were passed
             rules = []
             if use_standard:
                 rules.append("Basic")
@@ -83,7 +82,7 @@ def run_market_scan(
     tickers, start_date, end_date, use_standard, use_advanced,
     max_workers=8, max_retries=3, debug_bypass_filter=False
 ):
-    today = datetime.datetime.utcnow().date()
+    today = datetime.datetime.now(datetime.UTC).date()  # UTC-safe
     score_table = []
     skipped_tickers = []
     st.info(f"Scanning {len(tickers)} tickers in parallel (workers: {max_workers})...")
@@ -203,31 +202,34 @@ with tab1:
             height=350,
             enable_enterprise_modules=False,
         )
-        
-        selected_symbol = None
+
         selected_rows = aggrid_response["selected_rows"]
-        
-        # DEBUG: Show what's returned to fix any edge cases
-        st.write("DEBUG selected_rows type:", type(selected_rows))
-        st.write("DEBUG selected_rows value:", selected_rows)
-        
+        # Robust, cross-type selection logic!
+        selected_symbol = None
         if isinstance(selected_rows, list) and selected_rows:
-            # AgGrid selected rows: list of dicts
             row = selected_rows[0]
             if isinstance(row, dict):
                 selected_symbol = row.get("Symbol") or row.get("symbol")
         elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
-            # AgGrid sometimes returns DataFrame
             if "Symbol" in selected_rows.columns:
                 selected_symbol = selected_rows.iloc[0]["Symbol"]
             elif "symbol" in selected_rows.columns:
                 selected_symbol = selected_rows.iloc[0]["symbol"]
         else:
             selected_symbol = st.session_state.get("selected_symbol", None)
-        
+
         st.session_state["selected_symbol"] = selected_symbol
 
-
+        # Chart/advice for the selected symbol
+        if selected_symbol:
+            item = next((item for item in st.session_state.top_results if item["Ticker"] == selected_symbol), None)
+            if item:
+                st.markdown(f"### 📊 {item['Ticker']} (Score: {item['Score']}, Passed: {item.get('Rules', '')})")
+                st.markdown("**Price Chart**")
+                fig = plot_price_chart(item["Data"], item["Ticker"])
+                st.plotly_chart(fig, use_container_width=True)
+                st.markdown("### 💡 Trade Strategy")
+                st.markdown(generate_trade_advice(item["Data"]))
 
     # Branding footer
     st.markdown(
@@ -256,30 +258,14 @@ The score for each stock is based on the following factors:
 Higher scores = stronger technical momentum.
 
 ---
-""")
 
-    # --- Visual Example (Local Image) ---
-    st.markdown("### 📈 Visual Example:")
+### 📈 Visual Example:
 
-    image_path = "trend_template.jpg"  # Ensure this file is in your project directory
-    if os.path.exists(image_path):
-        st.image(
-            image_path,
-            caption="Sample Minervini Trend Template (Source: ProdigalTrader)",
-            use_container_width=True,  # <-- updated
-        )
-        st.markdown(
-            '<sub>Sample Minervini Trend Template ([Source](https://x.com/ProdigalTrader/status/1156115610532634624/photo/1))</sub>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.warning(
-            "Trend template image not found. Please add 'trend_template.jpg' to your project folder."
-        )
+[<img src="https://pbs.twimg.com/media/EA2IYZTUEAIk51h?format=jpg&name=large" width="500"/>](https://x.com/ProdigalTrader/status/1156115610532634624/photo/1)
+<sub>Sample Minervini Trend Template</sub>
 
-    # --- Continue with markdown sections ---
-    st.markdown("""
 ---
+
 ### 💡 Why These Rules Work
 
 - **Price above moving averages** shows uptrend strength and institutional demand.
@@ -288,12 +274,14 @@ Higher scores = stronger technical momentum.
 - **These rules** filter for stocks most likely to outperform in uptrending markets.
 
 ---
+
 ### 📚 Classic Examples
 
-- [Mark Minervini's Risk Management Case Study (TraderLion)](https://traderlion.com/investing-champions/mark-minervinis-risk-management/)
-- [How to Make Money in Stocks by William O'Neil (Video)](https://www.financialwisdomtv.com/post/how-to-make-money-in-stocks-by-william-o-neil)
+- [Minervini's Risk Management (Case Study)](https://traderlion.com/investing-champions/mark-minervinis-risk-management/)
+- [CANSLIM: How to Make Money in Stocks by William O’Neil](https://www.financialwisdomtv.com/post/how-to-make-money-in-stocks-by-william-o-neil)
 
 ---
+
 ### 🏆 Strategy Influences
 
 - Mark Minervini (Trend Template)
@@ -304,5 +292,10 @@ Higher scores = stronger technical momentum.
 - ATR-Based Stops
 
 ---
+
 > The strategy module uses a fusion of these methods to provide conservative yet high-upside trade setups.
+
+---
+
+<div style='text-align: center; color: gray; margin-top: 36px;'>Created by Jered Willoughby</div>
 """, unsafe_allow_html=True)
