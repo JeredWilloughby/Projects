@@ -205,11 +205,12 @@ with tab1:
         )
 
         selected_rows = aggrid_response["selected_rows"]
-        if selected_rows:
+        if selected_rows is not None and len(selected_rows) > 0:
             selected_symbol = selected_rows[0]["Symbol"]
             st.session_state.selected_symbol = selected_symbol
         else:
             selected_symbol = st.session_state.selected_symbol
+
 
         # Chart/advice for the selected symbol
         if selected_symbol:
